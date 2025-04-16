@@ -101,7 +101,7 @@ Acesse [http://localhost:3000](http://localhost:3000) no navegador para ver o re
 
 ## TODO
 
-1. Criação da interface de usuário e componentes
+1. Criação da interface de usuário e componentes - OK
 2. Implementação do formulário de cadastro de operadoras
 3. Configuração da conexão com o banco de dados
 4. Desenvolvimento do sistema de upload e processamento de CSV
