@@ -39,6 +39,7 @@ export default function ReportsPage() {
 	const [reportData, setReportData] = useState<ReportData | null>(null);
 	const [rankingData, setRankingData] = useState<any | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [pdfExportError, setPdfExportError] = useState(false);
 
 	// Carregar dados do ranking inicialmente
 	useEffect(() => {
@@ -203,7 +204,17 @@ export default function ReportsPage() {
 							dateRange: { startDate, endDate },
 						}}
 						className="mb-6"
+						onExportError={setPdfExportError}
 					/>
+
+					{/* Mostrar o fallback APENAS quando houver erro na exportação PDF */}
+					{pdfExportError && (
+						<FallbackExportTable
+							data={reportData.sales}
+							title="Relatório de Vendas"
+							filename="relatorio_vendas"
+						/>
+					)}
 
 					<Card className="mb-6">
 						<h2 className="text-lg font-semibold text-gray-700 mb-4">
@@ -293,16 +304,6 @@ export default function ReportsPage() {
 							</p>
 						)}
 					</Card>
-
-					{/* Add fallback export option when reporting errors with the PDF export */}
-					{reportType === "sales" &&
-						reportData?.sales?.length > 0 && (
-							<FallbackExportTable
-								data={reportData.sales}
-								title="Relatório de Vendas"
-								filename="relatorio_vendas"
-							/>
-						)}
 				</div>
 			)}
 
@@ -315,7 +316,17 @@ export default function ReportsPage() {
 							reportType: "ranking",
 						}}
 						className="mb-6"
+						onExportError={setPdfExportError}
 					/>
+
+					{/* Mostrar o fallback APENAS quando houver erro na exportação PDF */}
+					{pdfExportError && (
+						<FallbackExportTable
+							data={rankingData.operators}
+							title="Ranking de Operadoras"
+							filename="ranking_operadoras"
+						/>
+					)}
 
 					<Card className="mb-6">
 						<h2 className="text-lg font-semibold text-gray-700 mb-4">
@@ -404,16 +415,6 @@ export default function ReportsPage() {
 							</p>
 						)}
 					</Card>
-
-					{/* Add fallback export option when reporting errors with the PDF export */}
-					{reportType === "ranking" &&
-						rankingData?.operators?.length > 0 && (
-							<FallbackExportTable
-								data={rankingData.operators}
-								title="Ranking de Operadoras"
-								filename="ranking_operadoras"
-							/>
-						)}
 				</div>
 			)}
 		</MainLayout>

@@ -33,11 +33,13 @@ interface ExportData {
 interface ExportOptionsProps {
 	data: ExportData;
 	className?: string;
+	onExportError: (hasError: boolean) => void; // Nova prop para comunicar erros
 }
 
 const ExportOptions: React.FC<ExportOptionsProps> = ({
 	data,
 	className = "",
+	onExportError, // Adicionar a prop para comunicar erros
 }) => {
 	const [isExporting, setIsExporting] = useState(false);
 	const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">(
@@ -263,6 +265,9 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
 			const jspdfModule = await import("jspdf");
 			const autoTableModule = await import("jspdf-autotable");
 
+			// Reset error state when attempting export
+			onExportError(false);
+
 			// Create a new document
 			const doc = new jspdfModule.default();
 
@@ -371,6 +376,8 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
 			doc.save(`${getFileName()}.pdf`);
 		} catch (error) {
 			console.error("Erro ao exportar para PDF:", error);
+			// Signal that an error occurred
+			onExportError(true);
 			// Show error message
 			toast?.error?.("Falha ao gerar PDF. Tente a opção alternativa.");
 		}
