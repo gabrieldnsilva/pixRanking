@@ -6,6 +6,7 @@ import Card from "@/components/UI/Card";
 import Button from "@/components/UI/Button";
 import DateRangeFilter from "@/components/Dashboard/DateRangeFilter";
 import ExportOptions from "@/components/Reports/ExportOptions";
+import FallbackExportTable from "@/components/Reports/FallbackExportTable";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 
@@ -292,6 +293,16 @@ export default function ReportsPage() {
 							</p>
 						)}
 					</Card>
+
+					{/* Add fallback export option when reporting errors with the PDF export */}
+					{reportType === "sales" &&
+						reportData?.sales?.length > 0 && (
+							<FallbackExportTable
+								data={reportData.sales}
+								title="Relatório de Vendas"
+								filename="relatorio_vendas"
+							/>
+						)}
 				</div>
 			)}
 
@@ -393,6 +404,16 @@ export default function ReportsPage() {
 							</p>
 						)}
 					</Card>
+
+					{/* Add fallback export option when reporting errors with the PDF export */}
+					{reportType === "ranking" &&
+						rankingData?.operators?.length > 0 && (
+							<FallbackExportTable
+								data={rankingData.operators}
+								title="Ranking de Operadoras"
+								filename="ranking_operadoras"
+							/>
+						)}
 				</div>
 			)}
 		</MainLayout>

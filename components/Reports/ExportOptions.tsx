@@ -257,25 +257,33 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
 	};
 
 	// Exportar para PDF
-	const exportToPDF = () => {
+	const exportToPDF = async () => {
 		try {
-			const doc = new jsPDF();
-			const title = getReportTitle();
+			// Import modules in the correct order
+			const jspdfModule = await import("jspdf");
+			const autoTableModule = await import("jspdf-autotable");
 
-			// Adicionar título
+			// Create a new document
+			const doc = new jspdfModule.default();
+
+			// Add title
+			const title = getReportTitle();
 			doc.setFontSize(16);
 			doc.text(title, 14, 22);
 
+			// Setup table data based on report type
 			if (data.reportType === "ranking" && data.operators) {
-				// Preparar dados para a tabela
-				const tableColumn = [
+				// Column headers
+				const headers = [
 					"Posição",
 					"Nome",
 					"Matrícula",
 					"Qtd. Vendas",
 					"Valor Total (R$)",
 				];
-				const tableRows = data.operators.map((op, index) => [
+
+				// Table rows
+				const rows = data.operators.map((op, index) => [
 					index + 1,
 					op.name,
 					op.registrationNumber,
@@ -283,19 +291,20 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
 					formatCurrency(op.totalAmount),
 				]);
 
-				// Adicionar tabela
-				(doc as any).autoTable({
-					head: [tableColumn],
-					body: tableRows,
+				// Use the global function that the plugin adds
+				(autoTableModule.default as any)(doc, {
+					head: [headers],
+					body: rows,
 					startY: 30,
 					theme: "striped",
 					styles: { fontSize: 10 },
-					headStyles: { fillColor: [99, 102, 241] },
+					headStyles: { fillColor: [28, 110, 12] },
 				});
 
-				// Adicionar totais
+				// Add totals
 				if (data.summary) {
-					const finalY = (doc as any).lastAutoTable.finalY || 30;
+					// Get the final y position after the table is rendered
+					const finalY = (doc as any).lastAutoTable?.finalY || 30;
 					doc.setFontSize(12);
 					doc.text(
 						`Total de Vendas: ${data.summary.totalSales}`,
@@ -311,15 +320,17 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
 					);
 				}
 			} else if (data.reportType === "sales" && data.sales) {
-				// Preparar dados para a tabela
-				const tableColumn = [
+				// Column headers
+				const headers = [
 					"Data",
 					"Operador",
 					"Matrícula",
 					"Produto",
 					"Valor (R$)",
 				];
-				const tableRows = data.sales.map((sale) => [
+
+				// Table rows
+				const rows = data.sales.map((sale) => [
 					new Date(sale.saleDate).toLocaleDateString("pt-BR"),
 					sale.operatorName,
 					sale.operatorRegistration,
@@ -327,19 +338,19 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
 					formatCurrency(sale.amount),
 				]);
 
-				// Adicionar tabela
-				(doc as any).autoTable({
-					head: [tableColumn],
-					body: tableRows,
+				// Use the global function that the plugin adds
+				(autoTableModule.default as any)(doc, {
+					head: [headers],
+					body: rows,
 					startY: 30,
 					theme: "striped",
 					styles: { fontSize: 10 },
-					headStyles: { fillColor: [99, 102, 241] },
+					headStyles: { fillColor: [28, 110, 12] },
 				});
 
-				// Adicionar totais
+				// Add totals
 				if (data.summary) {
-					const finalY = (doc as any).lastAutoTable.finalY || 30;
+					const finalY = (doc as any).lastAutoTable?.finalY || 30;
 					doc.setFontSize(12);
 					doc.text(
 						`Total de Vendas: ${data.summary.totalSales}`,
@@ -356,10 +367,12 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
 				}
 			}
 
-			// Salvar o PDF
+			// Save the PDF file
 			doc.save(`${getFileName()}.pdf`);
 		} catch (error) {
 			console.error("Erro ao exportar para PDF:", error);
+			// Show error message
+			toast?.error?.("Falha ao gerar PDF. Tente a opção alternativa.");
 		}
 	};
 
