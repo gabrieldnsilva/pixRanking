@@ -4,92 +4,59 @@ import React, { useState } from "react";
 import MainLayout from "@/components/Layout/MainLayout";
 import CSVUploader from "@/components/Upload/CSVUploader";
 import Card from "@/components/UI/Card";
+import Button from "@/components/UI/Button";
+import Link from "next/link";
+import { toast } from "react-hot-toast";
 
-// Interface para os dados processados
-interface ProcessedSale {
-	id: string;
-	date: string;
-	operator: string;
-	operatorName?: string;
-	product: string;
-	amount: number;
+// Interface para os resultados do processamento
+interface ProcessingResult {
+	success: boolean;
+	totalProcessed: number;
+	validRecords: number;
+	ignoredRecords: number;
+	unknownOperators: string[];
+	processingDate: string;
 }
 
 export default function UploadPage() {
 	const [isUploading, setIsUploading] = useState(false);
-	const [processedData, setProcessedData] = useState<ProcessedSale[]>([]);
-	const [showResults, setShowResults] = useState(false);
+	const [result, setResult] = useState<ProcessingResult | null>(null);
+	const [error, setError] = useState<string | null>(null);
 
-	// Função para simular o upload e processamento do arquivo CSV
+	// Função para upload e processamento do arquivo CSV
 	const handleUpload = async (file: File) => {
 		try {
 			setIsUploading(true);
-			setShowResults(false);
+			setResult(null);
+			setError(null);
 
-			// Simulando o processamento do arquivo
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			// Preparar FormData para envio
+			const formData = new FormData();
+			formData.append("csvFile", file);
 
-			// Em uma implementação real, você enviaria o arquivo para a API:
-			// const formData = new FormData();
-			// formData.append('csvFile', file);
-			//
-			// const response = await fetch('/api/upload', {
-			//   method: 'POST',
-			//   body: formData,
-			// });
-			//
-			// if (!response.ok) throw new Error('Erro ao processar o arquivo');
-			// const data = await response.json();
+			// Enviar para a API
+			const response = await fetch("/api/upload", {
+				method: "POST",
+				body: formData,
+			});
 
-			// Simula dados processados para visualização
-			const mockProcessedData: ProcessedSale[] = [
-				{
-					id: "1",
-					date: "10-01-2023",
-					operator: "100",
-					operatorName: "João Silva",
-					product: "Pix",
-					amount: 125.5,
-				},
-				{
-					id: "2",
-					date: "10-01-2023",
-					operator: "102",
-					operatorName: "Pedro Santos",
-					product: "Pix",
-					amount: 78.9,
-				},
-				{
-					id: "3",
-					date: "11-01-2023",
-					operator: "100",
-					operatorName: "João Silva",
-					product: "Pix",
-					amount: 233.45,
-				},
-				{
-					id: "4",
-					date: "11-01-2023",
-					operator: "101",
-					operatorName: "Maria Souza",
-					product: "Pix",
-					amount: 65.3,
-				},
-				{
-					id: "5",
-					date: "12-01-2023",
-					operator: "101",
-					operatorName: "Maria Souza",
-					product: "Pix",
-					amount: 142.75,
-				},
-			];
+			const data = await response.json();
 
-			setProcessedData(mockProcessedData);
-			setShowResults(true);
-		} catch (error) {
+			if (!response.ok) {
+				throw new Error(data.error || "Erro ao processar o arquivo");
+			}
+
+			// Armazenar resultado
+			setResult(data);
+
+			// Notificar sucesso
+			toast.success("Arquivo processado com sucesso!");
+		} catch (error: any) {
 			console.error("Erro ao processar o arquivo:", error);
-			// Aqui você poderia implementar um feedback visual ao usuário
+			setError(error.message || "Ocorreu um erro ao processar o arquivo");
+			toast.error(
+				error.message || "Ocorreu um erro ao processar o arquivo"
+			);
 		} finally {
 			setIsUploading(false);
 		}
@@ -106,89 +73,84 @@ export default function UploadPage() {
 				</p>
 			</div>
 
+			{error && (
+				<div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
+					{error}
+				</div>
+			)}
+
 			<div className="mb-8">
 				<CSVUploader onUpload={handleUpload} isLoading={isUploading} />
 			</div>
 
-			{showResults && (
+			{result && (
 				<Card
 					title="Resultados do Processamento"
 					className="overflow-hidden"
 				>
-					<div className="mt-2 mb-4">
-						<p className="text-green-600 font-semibold">
-							Arquivo processado com sucesso!{" "}
-							{processedData.length} registros encontrados.
-						</p>
+					<div className="mt-2 mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
+						<h3 className="text-green-700 font-semibold text-lg mb-2">
+							Arquivo processado com sucesso!
+						</h3>
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+							<div>
+								<p className="text-gray-500">
+									Total de registros:
+								</p>
+								<p className="font-semibold">
+									{result.totalProcessed}
+								</p>
+							</div>
+							<div>
+								<p className="text-gray-500">
+									Registros importados:
+								</p>
+								<p className="font-semibold text-green-600">
+									{result.validRecords}
+								</p>
+							</div>
+							<div>
+								<p className="text-gray-500">
+									Registros ignorados:
+								</p>
+								<p className="font-semibold text-amber-600">
+									{result.ignoredRecords}
+								</p>
+							</div>
+						</div>
 					</div>
 
-					<div className="overflow-x-auto">
-						<table className="min-w-full divide-y divide-gray-200">
-							<thead className="bg-gray-50">
-								<tr>
-									<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Data
-									</th>
-									<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Operador
-									</th>
-									<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Produto
-									</th>
-									<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-										Valor
-									</th>
-								</tr>
-							</thead>
-							<tbody className="bg-white divide-y divide-gray-200">
-								{processedData.map((sale) => (
-									<tr key={sale.id}>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-											{sale.date}
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap">
-											<div className="text-sm text-gray-900">
-												{sale.operatorName}
-											</div>
-											<div className="text-sm text-gray-500">
-												Matrícula: {sale.operator}
-											</div>
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-											{sale.product}
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-											{new Intl.NumberFormat("pt-BR", {
-												style: "currency",
-												currency: "BRL",
-											}).format(sale.amount)}
-										</td>
-									</tr>
-								))}
-							</tbody>
-							<tfoot className="bg-gray-50">
-								<tr>
-									<td
-										colSpan={3}
-										className="px-6 py-3 text-right text-sm font-medium text-gray-500"
+					{result.unknownOperators.length > 0 && (
+						<div className="mb-6">
+							<h3 className="text-amber-700 font-semibold mb-2">
+								Operadoras não encontradas
+							</h3>
+							<p className="text-gray-600 text-sm mb-2">
+								Os seguintes números de matrícula não
+								correspondem a nenhuma operadora cadastrada:
+							</p>
+							<div className="flex flex-wrap gap-2">
+								{result.unknownOperators.map((registration) => (
+									<span
+										key={registration}
+										className="px-2 py-1 bg-amber-50 border border-amber-200 rounded-md text-sm"
 									>
-										Total:
-									</td>
-									<td className="px-6 py-3 text-right text-sm font-medium text-gray-900">
-										{new Intl.NumberFormat("pt-BR", {
-											style: "currency",
-											currency: "BRL",
-										}).format(
-											processedData.reduce(
-												(sum, sale) =>
-													sum + sale.amount,
-												0
-											)
-										)}
-									</td>
-								</tr>
-							</tfoot>
-						</table>
+										{registration}
+									</span>
+								))}
+							</div>
+						</div>
+					)}
+
+					<div className="flex justify-between mt-6">
+						<Link href="/operators/new">
+							<Button variant="secondary">
+								Cadastrar Nova Operadora
+							</Button>
+						</Link>
+						<Link href="/">
+							<Button>Ver Ranking Atualizado</Button>
+						</Link>
 					</div>
 				</Card>
 			)}
