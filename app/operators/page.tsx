@@ -6,59 +6,84 @@ import MainLayout from "@/components/Layout/MainLayout";
 import Button from "@/components/UI/Button";
 import OperatorList from "@/components/Operators/OperatorList";
 import Card from "@/components/UI/Card";
+import { toast } from "react-hot-toast";
 
-// Dados iniciais para demonstração
-const initialOperators = [
-	{
-		id: "1",
-		name: "João Silva",
-		registrationNumber: "100",
-		createdAt: "2023-01-15T10:30:00Z",
-	},
-	{
-		id: "2",
-		name: "Maria Souza",
-		registrationNumber: "101",
-		profileImage: "/images/avatars/maria.jpg",
-		createdAt: "2023-02-20T14:15:00Z",
-	},
-	{
-		id: "3",
-		name: "Pedro Santos",
-		registrationNumber: "102",
-		createdAt: "2023-03-10T09:45:00Z",
-	},
-];
+interface Operator {
+	_id: string;
+	id: string;
+	name: string;
+	registrationNumber: string;
+	profileImage?: string;
+	createdAt: string;
+}
 
 export default function OperatorsPage() {
-	const [operators, setOperators] = useState(initialOperators);
+	const [operators, setOperators] = useState<Operator[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-	// Simulação de carregamento de dados
+	// Carregar operadoras da API
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			setIsLoading(false);
-		}, 1000);
+		async function fetchOperators() {
+			try {
+				setIsLoading(true);
 
-		return () => clearTimeout(timer);
+				const response = await fetch("/api/operators");
+				const data = await response.json();
+
+				if (!response.ok) {
+					throw new Error(
+						data.error || "Erro ao carregar operadoras"
+					);
+				}
+
+				// Garantir compatibilidade com o componente existente
+				const formattedOperators = data.operators.map((op: any) => ({
+					...op,
+					id: op._id, // Adicionar id como alias para _id
+				}));
+
+				setOperators(formattedOperators);
+			} catch (error: any) {
+				console.error("Erro ao carregar operadoras:", error);
+				setError(error.message);
+				toast.error("Erro ao carregar a lista de operadoras");
+			} finally {
+				setIsLoading(false);
+			}
+		}
+
+		fetchOperators();
 	}, []);
 
-	// Função para simular a exclusão de operadoras
+	// Função para excluir operadoras
 	const handleDeleteOperator = async (id: string) => {
 		try {
 			setIsDeleting(true);
 
-			// Simulando uma chamada à API
-			await new Promise((resolve) => setTimeout(resolve, 800));
+			// Confirmar exclusão
+			if (!confirm("Tem certeza que deseja excluir esta operadora?")) {
+				setIsDeleting(false);
+				return;
+			}
 
-			// Removendo a operadora da lista local
+			const response = await fetch(`/api/operators/${id}`, {
+				method: "DELETE",
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || "Erro ao excluir operadora");
+			}
+
+			// Atualizar a lista local
 			setOperators(operators.filter((op) => op.id !== id));
-
-			// Em uma implementação real, você chamaria a API:
-			// await fetch(`/api/operators/${id}`, { method: 'DELETE' });
-		} catch (error) {
+			toast.success("Operadora excluída com sucesso");
+		} catch (error: any) {
 			console.error("Erro ao excluir operadora:", error);
+			toast.error(error.message || "Erro ao excluir operadora");
 		} finally {
 			setIsDeleting(false);
 		}
@@ -79,6 +104,12 @@ export default function OperatorsPage() {
 					<Button>Nova Operadora</Button>
 				</Link>
 			</div>
+
+			{error && (
+				<div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
+					{error}
+				</div>
+			)}
 
 			<Card>
 				{isLoading ? (
