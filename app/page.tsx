@@ -5,42 +5,63 @@ import MainLayout from "@/components/Layout/MainLayout";
 import RankingList from "@/components/Dashboard/RankingList";
 import StatisticsCard from "@/components/Dashboard/StatisticsCard";
 import Card from "@/components/UI/Card";
+import { toast } from "react-hot-toast";
 
-// Dados de exemplo para visualização inicial
-const sampleOperators = [
-	{ id: "1", name: "João Silva", registrationNumber: "100", salesCount: 42 },
-	{ id: "2", name: "Maria Souza", registrationNumber: "101", salesCount: 38 },
-	{
-		id: "3",
-		name: "Pedro Santos",
-		registrationNumber: "102",
-		salesCount: 27,
-	},
-	{ id: "4", name: "Ana Lima", registrationNumber: "103", salesCount: 24 },
-	{
-		id: "5",
-		name: "Carlos Oliveira",
-		registrationNumber: "104",
-		salesCount: 19,
-	},
-];
+interface Operator {
+	operatorId: string;
+	name: string;
+	registrationNumber: string;
+	profileImage?: string;
+	salesCount: number;
+	totalAmount: number;
+}
+
+interface SalesSummary {
+	totalSales: number;
+	totalAmount: number;
+}
 
 export default function Home() {
-	const [operators, setOperators] = useState(sampleOperators);
+	const [operators, setOperators] = useState<Operator[]>([]);
+	const [summary, setSummary] = useState<SalesSummary>({
+		totalSales: 0,
+		totalAmount: 0,
+	});
 	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-	// Simula carregamento de dados
+	// Carregar dados do ranking
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			setIsLoading(false);
-		}, 1500);
+		async function fetchData() {
+			try {
+				setIsLoading(true);
 
-		return () => clearTimeout(timer);
+				const response = await fetch("/api/sales?mode=statistics");
+
+				if (!response.ok) {
+					throw new Error("Erro ao carregar dados do ranking");
+				}
+
+				const data = await response.json();
+				setOperators(data.statistics || []);
+				setSummary(data.summary || { totalSales: 0, totalAmount: 0 });
+			} catch (error: any) {
+				console.error("Erro ao carregar dados:", error);
+				setError(
+					error.message || "Ocorreu um erro ao carregar o ranking"
+				);
+				toast.error("Erro ao carregar dados do ranking");
+			} finally {
+				setIsLoading(false);
+			}
+		}
+
+		fetchData();
 	}, []);
 
-	const totalSales = operators.reduce((sum, op) => sum + op.salesCount, 0);
+	// Calcular média de vendas por operador
 	const avgSales = operators.length
-		? Math.round((totalSales / operators.length) * 10) / 10
+		? Math.round((summary.totalSales / operators.length) * 10) / 10
 		: 0;
 
 	return (
@@ -55,20 +76,29 @@ export default function Home() {
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 				<StatisticsCard
 					title="Total de Vendas"
-					value={totalSales}
+					value={summary.totalSales}
 					description="Todas as transações PIX"
 				/>
 				<StatisticsCard
-					title="Média por Operador"
-					value={avgSales}
-					description="Vendas médias por operador"
+					title="Valor Total (R$)"
+					value={new Intl.NumberFormat("pt-BR", {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					}).format(summary.totalAmount)}
+					description="Valor total das vendas"
 				/>
 				<StatisticsCard
 					title="Operadores Ativos"
 					value={operators.length}
-					description="Operadores com vendas registradas"
+					description={`Média de ${avgSales} vendas por operador`}
 				/>
 			</div>
+
+			{error && (
+				<div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
+					{error}
+				</div>
+			)}
 
 			<div className="mb-8">
 				{isLoading ? (
@@ -97,8 +127,18 @@ export default function Home() {
 							<p className="text-gray-600">Carregando dados...</p>
 						</div>
 					</Card>
-				) : (
+				) : operators.length > 0 ? (
 					<RankingList operators={operators} />
+				) : (
+					<Card className="p-8 text-center">
+						<h3 className="text-xl font-semibold text-gray-700 mb-2">
+							Nenhum dado de venda encontrado
+						</h3>
+						<p className="text-gray-500 mb-4">
+							Ainda não há registros de vendas PIX no sistema.
+							Faça o upload de um arquivo CSV para começar.
+						</p>
+					</Card>
 				)}
 			</div>
 		</MainLayout>
