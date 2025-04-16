@@ -45,6 +45,22 @@ export async function processCSV(fileContent: string) {
     // Converter e normalizar os dados do CSV
     const processedData: ProcessedSale[] = [];
     
+    // Obter todas as matrículas únicas para buscar operadoras em lote
+    const registrationNumbers = Array.from(
+      new Set(result.data.map(row => row['Operador'].trim()))
+    );
+    
+    // Buscar todas as operadoras relevantes de uma vez
+    const operators = await Operator.find({
+      registrationNumber: { $in: registrationNumbers }
+    });
+    
+    // Criar mapa para acesso rápido
+    const operatorMap = new Map();
+    operators.forEach(op => {
+      operatorMap.set(op.registrationNumber, op);
+    });
+    
     for (const row of result.data) {
       // Extrair dados da linha do CSV
       const dateParts = row['Data Sitef'].split('-');
@@ -59,8 +75,8 @@ export async function processCSV(fileContent: string) {
         continue; // Pular linhas com dados inválidos
       }
 
-      // Buscar a operadora pelo número de registro
-      const operator = await Operator.findOne({ registrationNumber: operatorRegistration });
+      // Buscar a operadora pelo número de registro no mapa
+      const operator = operatorMap.get(operatorRegistration);
 
       // Adicionar aos dados processados
       processedData.push({
@@ -92,6 +108,7 @@ export async function processCSV(fileContent: string) {
       validRecords: validSales.length,
       ignoredRecords: result.data.length - validSales.length,
       unknownOperators: unknownOperators,
+      processingDate: new Date(),
     };
   } catch (error) {
     console.error('Erro no processamento do CSV:', error);
@@ -147,6 +164,53 @@ export async function getSalesStatistics() {
     return salesByOperator;
   } catch (error) {
     console.error('Erro ao obter estatísticas de vendas:', error);
+    throw error;
+  }
+}
+
+/**
+ * Obter as vendas recentes com dados do operador
+ * @param limit Número máximo de vendas a retornar
+ * @returns Lista de vendas recentes
+ */
+export async function getRecentSales(limit = 100) {
+  try {
+    await connectToDatabase();
+    
+    const recentSales = await Sale.aggregate([
+      {
+        $sort: { saleDate: -1 }
+      },
+      {
+        $limit: limit
+      },
+      {
+        $lookup: {
+          from: 'operators',
+          localField: 'operatorId',
+          foreignField: '_id',
+          as: 'operator'
+        }
+      },
+      {
+        $unwind: '$operator'
+      },
+      {
+        $project: {
+          _id: 1,
+          saleDate: 1,
+          amount: 1,
+          product: 1,
+          operatorName: '$operator.name',
+          operatorRegistration: 1,
+          createdAt: 1
+        }
+      }
+    ]);
+    
+    return recentSales;
+  } catch (error) {
+    console.error('Erro ao obter vendas recentes:', error);
     throw error;
   }
 }
