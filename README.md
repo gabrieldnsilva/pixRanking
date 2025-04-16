@@ -105,7 +105,7 @@ Acesse [http://localhost:3000](http://localhost:3000) no navegador para ver o re
 2. Implementação do formulário de cadastro de operadoras
 3. Configuração da conexão com o banco de dados
 4. Desenvolvimento do sistema de upload e processamento de CSV
-5. Implementação da lógica de ranking e dashboard
+5. Implementação da lógica de r'anking e dashboard
 6. Testes e refinamento da interface
 
 ## Estrutura do Arquivo CSV
