@@ -31,6 +31,10 @@ export async function processCSV(fileContent: string) {
     // Conectar ao banco de dados
     await connectToDatabase();
 
+    // MODIFICAÇÃO: Remover todos os registros de vendas existentes
+    await Sale.deleteMany({});
+    console.log('Todos os registros de vendas anteriores foram removidos');
+
     // Processar o arquivo CSV utilizando PapaParse
     const result = Papa.parse<CSVRow>(fileContent, {
       header: true,
@@ -109,6 +113,7 @@ export async function processCSV(fileContent: string) {
       ignoredRecords: result.data.length - validSales.length,
       unknownOperators: unknownOperators,
       processingDate: new Date(),
+      isReplacement: true, // Nova flag para indicar que os dados anteriores foram substituídos
     };
   } catch (error) {
     console.error('Erro no processamento do CSV:', error);

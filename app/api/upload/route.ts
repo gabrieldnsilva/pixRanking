@@ -40,6 +40,11 @@ export async function POST(request: NextRequest) {
     // Processar o CSV
     const result = await processCSV(fileContent);
     
+    // Adicionar mensagem de feedback sobre substituição de dados
+    if (result.isReplacement) {
+      result.message = 'Os dados anteriores foram substituídos pelos novos registros.';
+    }
+    
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Erro ao processar upload:', error);

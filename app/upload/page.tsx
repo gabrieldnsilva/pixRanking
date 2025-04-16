@@ -92,6 +92,13 @@ export default function UploadPage() {
 						<h3 className="text-green-700 font-semibold text-lg mb-2">
 							Arquivo processado com sucesso!
 						</h3>
+
+						{/* Adicionar mensagem de substituição de dados */}
+						<p className="text-green-600 mb-3">
+							Os dados anteriores foram substituídos pelos novos
+							registros.
+						</p>
+
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
 							<div>
 								<p className="text-gray-500">
