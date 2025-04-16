@@ -117,15 +117,37 @@ export async function processCSV(fileContent: string) {
 }
 
 /**
- * Consulta as estatísticas de vendas por operadora
+ * Consulta as estatísticas de vendas por operadora com filtro opcional por período
+ * @param options Opções de filtro como data inicial e final
  * @returns Array com estatísticas de vendas por operadora
  */
-export async function getSalesStatistics() {
+export async function getSalesStatistics(options: { 
+  startDate?: Date; 
+  endDate?: Date;
+} = {}) {
   try {
     await connectToDatabase();
 
-    // Agregar dados de vendas por operadora
+    // Construir o filtro para agregação
+    const matchStage: any = {};
+    
+    if (options.startDate || options.endDate) {
+      matchStage.saleDate = {};
+      
+      if (options.startDate) {
+        matchStage.saleDate.$gte = options.startDate;
+      }
+      
+      if (options.endDate) {
+        matchStage.saleDate.$lte = options.endDate;
+      }
+    }
+
+    // Agregar dados de vendas por operadora com filtro de data
     const salesByOperator = await Sale.aggregate([
+      {
+        $match: matchStage
+      },
       {
         $group: {
           _id: '$operatorId',
@@ -169,15 +191,39 @@ export async function getSalesStatistics() {
 }
 
 /**
- * Obter as vendas recentes com dados do operador
- * @param limit Número máximo de vendas a retornar
- * @returns Lista de vendas recentes
+ * Obter as vendas recentes com dados do operador e filtro opcional por período
+ * @param options Opções como limite de registros e filtro de data
+ * @returns Lista de vendas
  */
-export async function getRecentSales(limit = 100) {
+export async function getRecentSales(options: {
+  limit?: number;
+  startDate?: Date;
+  endDate?: Date;
+} = {}) {
   try {
     await connectToDatabase();
     
+    const { limit = 100 } = options;
+    
+    // Construir o filtro
+    const matchStage: any = {};
+    
+    if (options.startDate || options.endDate) {
+      matchStage.saleDate = {};
+      
+      if (options.startDate) {
+        matchStage.saleDate.$gte = options.startDate;
+      }
+      
+      if (options.endDate) {
+        matchStage.saleDate.$lte = options.endDate;
+      }
+    }
+    
     const recentSales = await Sale.aggregate([
+      {
+        $match: matchStage
+      },
       {
         $sort: { saleDate: -1 }
       },
