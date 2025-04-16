@@ -5,43 +5,43 @@ import { useRouter } from "next/navigation";
 import MainLayout from "@/components/Layout/MainLayout";
 import Card from "@/components/UI/Card";
 import OperatorForm from "@/components/Operators/OperatorForm";
+import { toast } from "react-hot-toast";
 
 export default function NewOperatorPage() {
 	const router = useRouter();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-	// Função para simular o cadastro de uma nova operadora
+	// Função para cadastrar uma nova operadora
 	const handleSubmit = async (formData: FormData) => {
 		try {
 			setIsSubmitting(true);
+			setError(null);
 
-			// Simulando um atraso na resposta da API
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
-			// Dados que seriam enviados para a API
-			const name = formData.get("name");
-			const registrationNumber = formData.get("registrationNumber");
-			const profileImage = formData.get("profileImage");
-
-			console.log("Dados para cadastro:", {
-				name,
-				registrationNumber,
-				profileImage,
+			const response = await fetch("/api/operators", {
+				method: "POST",
+				body: formData,
 			});
 
-			// Em uma implementação real, você enviaria os dados para a API:
-			// const response = await fetch('/api/operators', {
-			//   method: 'POST',
-			//   body: formData,
-			// });
-			//
-			// if (!response.ok) throw new Error('Erro ao cadastrar operadora');
+			const data = await response.json();
 
-			// Redireciona para a lista de operadoras após o cadastro
+			if (!response.ok) {
+				throw new Error(data.error || "Erro ao cadastrar operadora");
+			}
+
+			// Mostrar mensagem de sucesso
+			toast.success("Operadora cadastrada com sucesso!");
+
+			// Redirecionar para a lista de operadoras após o cadastro
 			router.push("/operators");
-		} catch (error) {
+		} catch (error: any) {
 			console.error("Erro ao cadastrar operadora:", error);
-			// Aqui você poderia implementar um feedback visual ao usuário
+			setError(
+				error.message || "Ocorreu um erro ao cadastrar a operadora"
+			);
+			toast.error(
+				error.message || "Ocorreu um erro ao cadastrar a operadora"
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -58,10 +58,17 @@ export default function NewOperatorPage() {
 				</p>
 			</div>
 
+			{error && (
+				<div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
+					{error}
+				</div>
+			)}
+
 			<Card className="max-w-2xl mx-auto">
 				<OperatorForm
 					onSubmit={handleSubmit}
 					isLoading={isSubmitting}
+					mode="create"
 				/>
 			</Card>
 		</MainLayout>
