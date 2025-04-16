@@ -10,6 +10,8 @@ import Card from "@/components/UI/Card";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import Link from "next/link";
+import Button from "@/components/UI/Button";
 
 interface Operator {
 	id: string;
@@ -124,22 +126,27 @@ export default function Home() {
 						Visualize o ranking de vendas PIX
 					</p>
 				</div>
-				{isFilterApplied && summary.period && (
-					<div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
-						<span className="text-blue-700 font-medium">
-							Período filtrado:{" "}
-						</span>
-						<span className="text-blue-600">
-							{new Date(
-								summary.period.startDate || ""
-							).toLocaleDateString("pt-BR")}{" "}
-							a{" "}
-							{new Date(
-								summary.period.endDate || ""
-							).toLocaleDateString("pt-BR")}
-						</span>
-					</div>
-				)}
+				<div className="flex items-center space-x-2">
+					{isFilterApplied && summary.period && (
+						<div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+							<span className="text-blue-700 font-medium">
+								Período filtrado:{" "}
+							</span>
+							<span className="text-blue-600">
+								{new Date(
+									summary.period.startDate || ""
+								).toLocaleDateString("pt-BR")}{" "}
+								a{" "}
+								{new Date(
+									summary.period.endDate || ""
+								).toLocaleDateString("pt-BR")}
+							</span>
+						</div>
+					)}
+					<Link href="/reports">
+						<Button variant="secondary">Exportar Relatórios</Button>
+					</Link>
+				</div>
 			</div>
 
 			{/* Filtro de Data */}

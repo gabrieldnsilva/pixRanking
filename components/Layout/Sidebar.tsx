@@ -42,6 +42,14 @@ const Sidebar: React.FC = () => {
 							Upload CSV
 						</Link>
 					</li>
+					<li>
+						<Link
+							href="/reports"
+							className="block py-2 px-4 rounded hover:bg-indigo-700"
+						>
+							Relatórios
+						</Link>
+					</li>
 				</ul>
 			</nav>
 		</aside>
