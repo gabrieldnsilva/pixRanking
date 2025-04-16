@@ -8,6 +8,7 @@ import Card from "@/components/UI/Card";
 import { toast } from "react-hot-toast";
 
 interface Operator {
+	id: string;
 	operatorId: string;
 	name: string;
 	registrationNumber: string;
@@ -45,6 +46,7 @@ export default function Home() {
 				const data = await response.json();
 				setOperators(data.statistics || []);
 				setSummary(data.summary || { totalSales: 0, totalAmount: 0 });
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				console.error("Erro ao carregar dados:", error);
 				setError(

@@ -54,3 +54,35 @@ Segurança:
 
 Validação de dados no servidor
 Limpeza de arquivos não utilizados
+
+---
+
+Explicação da Implementação
+A implementação do processamento de CSV segue estas decisões importantes:
+
+Otimização de Performance:
+
+Buscamos todas as operadoras relevantes de uma vez só usando $in para melhor performance
+Usamos um mapa para armazenar operadoras em memória, evitando múltiplas consultas ao banco
+Implementamos inserção em lote com insertMany para eficiência na gravação
+Validação e Tratamento de Erros:
+
+Validamos o formato do arquivo CSV e seu conteúdo
+Identificamos operadoras desconhecidas para feedback ao usuário
+Implementamos tratamento adequado de erros com mensagens significativas
+Agregação para o Dashboard:
+
+Usamos pipeline de agregação do MongoDB para calcular estatísticas eficientemente
+Implementamos lookup para trazer dados relacionados em uma única consulta
+Ordenamos resultados para exibição no ranking
+Rastreamento de Resultados:
+
+Incluímos metadados sobre o processamento (registros processados, ignorados, etc.)
+Identificamos operadoras não encontradas para permitir correção
+Esta implementação completa o fluxo principal do sistema:
+
+Cadastro de operadoras
+Upload e processamento de arquivos CSV
+Associação de vendas às operadoras
+Exibição do ranking e estatísticas
+A arquitetura permite escalabilidade e manutenção fácil, seguindo as práticas de design documentadas anteriormente.
